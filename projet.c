@@ -3,7 +3,7 @@
 #include<string.h>
 
 #define N 1000
-char* Instruction[]={"push","push#","ipush","pop","ipop","dup","op","jmp","jpz","rnd","read","write","call","ret","halt"};
+char* valeur[]={"push","push#","ipush","pop","ipop","dup","op","jmp","jpz","rnd","read","write","call","ret","halt"};
 
 
 int nombre_ligne_fichier(char* nom_fichier){
@@ -15,14 +15,20 @@ int nombre_ligne_fichier(char* nom_fichier){
     FILE* fichier=NULL;
     fichier=fopen(nom_fichier,"r");
     int cpt=0; /*Pour compter le nombre de ligne*/
-    char caractere_courant; /*Pour stocker le carcrère qu'on est en train de lire*/
+    int caractere_courant; /*Pour stocker le carcrère qu'on est en train de lire*/
+    int c2='\0';  //ce caractère va nous permet de compter aussi la dernière ligne du fichier
 
     if(fichier!=NULL){
     while( (caractere_courant=fgetc(fichier) ) != EOF ){
         if(caractere_courant == '\n'){
-        cpt++;
+            cpt++;
+            }
+        c2=caractere_courant;
         }
-    }
+    printf("%c",c2);
+    if(c2 !='\n'){
+        cpt++;
+     }
     }
 
     else{
@@ -37,13 +43,13 @@ int nombre_ligne_fichier(char* nom_fichier){
 
 
 
-void traduction_pur(char* nom_fichier){ //on s'occupe des étiquettes plus tard 
+void traduction_pur(char* nom_fichier){
     FILE* fichier=NULL;
     fichier=fopen(nom_fichier,"r");
-    int nbligne=nombre_ligne_fichier(nom_fichier);   
+    int nbligne=nombre_ligne_fichier(nom_fichier);
     printf("%d",nbligne);
-    char lignes[N];   //contient une ligne à chaque itération de la boucle et j'ai pris N=1000 
-    for(int i=0;i<nbligne;i++){
+    char lignes[N];
+    for(int i=0;i<(nbligne);i++){
         fgets(lignes,N,fichier);
         printf("%s",lignes);
     }
