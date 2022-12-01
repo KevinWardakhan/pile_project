@@ -3,7 +3,7 @@
 #include<string.h>
 
 #define N 1000
-char* valeur[]={"push","push#","ipush","pop","ipop","dup","op","jmp","jpz","rnd","read","write","call","ret","halt"};
+char* Instruction[]={"push","push#","ipush","pop","ipop","dup","op","jmp","jpz","rnd","read","write","call","ret","halt"};
 
 
 int nombre_ligne_fichier(char* nom_fichier){
