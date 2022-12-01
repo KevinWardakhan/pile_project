@@ -84,12 +84,18 @@ void traduction(char* nom_fichier){
       }
     }
   }
+
+  fclose(fichier);
 }
 
 
-
-
 int main(int argc,char* argv[]){
+
+  FILE* fichier=NULL;
+  fichier=fopen(argv[1],"a"); fflush(fichier);
+  fputc('\n',fichier);
+  fclose(fichier);
+
   traduction(argv[1]);
   return 0;
 }
