@@ -3,6 +3,7 @@
 #include<string.h>
 
 #define N 1000
+#define nbinstr 15 //le nombre d'instructions
 char* valeur[]={"push","push#","ipush","pop","ipop","dup","op","jmp","jpz","rnd","read","write","call","ret","halt"};
 
 
@@ -47,11 +48,15 @@ void traduction_pur(char* nom_fichier){
     FILE* fichier=NULL;
     fichier=fopen(nom_fichier,"r");
     int nbligne=nombre_ligne_fichier(nom_fichier);
-    printf("%d",nbligne);
     char lignes[N];
     for(int i=0;i<(nbligne);i++){
-        fgets(lignes,N,fichier);
-        printf("%s",lignes);
+        fgets(lignes,N,fichier); //on prend la i-eme ligne 
+        for (int j = 0; j<nbinstr ;j++){ //on va rechercher chaque instruction possible dans la ligne
+            char* resultat=strstr(lignes,valeur[j]); //resultat pointe sur la première occurence de la sous chaine dans lignes si elle y est et renvoie NULL si l'instruction n'est pas sur la ligne                                     
+            if (resultat!=NULL){    // on a trouvé une instruction sur la ligne, et c'est la seule par hypothese : valeur[j]
+                printf("%s\n\n",resultat);  //on arrive bien a isole les instructions
+            }
+        }
     }
 }
 
