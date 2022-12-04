@@ -228,10 +228,10 @@ int main(int argc,char* argv[]){
 
   for(int i=0;i<nombre_ligne;i++){
     if(strcmp(tab_etiquette[i],"")!=0){
-      printf("Ligne %d : Instruction numero %d et l'etiquette est %s.\n",i,tab_instruction_courante_decimale[i],tab_etiquette[i]);
+      printf("Ligne %d : Instruction numero 0%x et l'etiquette est %s.\n",i,tab_instruction_courante_decimale[i],tab_etiquette[i]);
     }
     else{
-      printf("Ligne %d : Instruction numero %d et pas d'etiquette.\n",i,tab_instruction_courante_decimale[i]);
+      printf("Ligne %d : Instruction numero 0%x et pas d'etiquette.\n",i,tab_instruction_courante_decimale[i]);
     }
 
   }
