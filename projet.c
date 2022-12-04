@@ -4,10 +4,9 @@
 
 #define nombre_caractere_max_ligne 1000
 #define nombre_instruction 15
+#define nombre_caratere_max_etiquette 100
 
 char* Instruction[]={"push","push#","ipush","pop","ipop","dup","op","jmp","jpz","rnd","read","write","call","ret","halt"};
-
-
 
 
 int actualisation_fichier_code_assembleur(char* nom_fichier){
@@ -30,10 +29,6 @@ int actualisation_fichier_code_assembleur(char* nom_fichier){
     return -1;
   }
 }
-
-
-
-
 
 int nombre_ligne_fichier(char* nom_fichier){
 /*--------Renvoie le nombre de fois où on trouve dans un certain fichier le caractère saut de ligne--------*/
@@ -65,14 +60,9 @@ int nombre_ligne_fichier(char* nom_fichier){
   return cpt;
 }
 
-
-
-
-
-
-int traduction_instruction_octect_poids_fort(char* nom_fichier,int nombre_ligne,int *tab_instruction_courante){
+int traduction_instruction_octect_poids_fort(char* nom_fichier,int nombre_ligne,int *tab_instruction_courante_decimale){
   /*On va dans cette fonction transformer les code instructions (octet de poid forts pour l'instant) en code numérique.*/
-  /*On va mettre les diffèrentes valeurs du code numérique (octet de poids fort seulement) dans un tableau de int.*/
+  /*On va mettre les diffèrentes valeurs du code numérique (octet de poids fort seulement) dans un tableau de int (entier base 10).*/
   /*Cette fonction va renvoyer 0 si la traduction c'est bien passé, -1 si il y a eu un problème dans l'ouverture du fichier*/
 
   /*On a au prealable rajouter une ligne en fin de fichier, sinon la dernière ligne ne pourra pas être lu, si l'utilisateur n'appuie pas sur entrée à la fin de son fichier.*/
@@ -98,19 +88,19 @@ int traduction_instruction_octect_poids_fort(char* nom_fichier,int nombre_ligne,
       /*Il y a un ordre à respecter, pour éviter ce conflit*/
 
       if(strstr(ligne,"push#")!=NULL){
-        tab_instruction_courante[indice]=1; /*Si push# est dans ma ligne, je rajoute 1 dans mon tableau*/
+        tab_instruction_courante_decimale[indice]=1; /*Si push# est dans ma ligne, je rajoute 1 dans mon tableau*/
         indice++; /*On incrémente notre indice, pour la prochaine instruction*/
         verif=0; /*On change la valeur de notre drapeau pour indiqué qu'on a trouver l'instrcution : pas besoin d'aller plus loin.*/
       }
       else{
         if(strstr(ligne,"ipush")!=NULL){
-          tab_instruction_courante[indice]=2;
+          tab_instruction_courante_decimale[indice]=2;
           indice++;
           verif=0;
         }
         else{
           if(strstr(ligne,"push")!=NULL){
-            tab_instruction_courante[indice]=0;
+            tab_instruction_courante_decimale[indice]=0;
             indice++;
             verif=0;
           }
@@ -119,13 +109,13 @@ int traduction_instruction_octect_poids_fort(char* nom_fichier,int nombre_ligne,
 
       if(verif==1){
         if(strstr(ligne,"ipop")!=NULL){
-          tab_instruction_courante[indice]=4;
+          tab_instruction_courante_decimale[indice]=4;
           indice++;
           verif=0;
         }
         else{
           if(strstr(ligne,"pop")!=NULL){
-            tab_instruction_courante[indice]=3;
+            tab_instruction_courante_decimale[indice]=3;
             indice++;
             verif=0;
           }
@@ -136,7 +126,7 @@ int traduction_instruction_octect_poids_fort(char* nom_fichier,int nombre_ligne,
       if(verif==1){
         for(int j=5;j<nombre_instruction;j++){
           if(strstr(ligne,Instruction[j])!=NULL){
-            tab_instruction_courante[indice]=j;
+            tab_instruction_courante_decimale[indice]=j;
             indice++;
             verif=0;
             break;
@@ -150,7 +140,7 @@ int traduction_instruction_octect_poids_fort(char* nom_fichier,int nombre_ligne,
 
       if(verif==1){
         for(int j=indice;j<nombre_ligne;j++){
-          tab_instruction_courante[indice]=100;
+          tab_instruction_courante_decimale[indice]=100;
           indice++;
         }
       }
@@ -167,16 +157,83 @@ int traduction_instruction_octect_poids_fort(char* nom_fichier,int nombre_ligne,
   }
 }
 
+int recuperation_etiquette(char* nom_fichier,int nombre_ligne,char* tab_etiquette[]){
+/*Dans cette fonction on va recuperer les eventuelles etiquettes existante dans un tableau.*/
+/*Ce tableau est de taille du nombre de ligne du fichier.*/
+/*S'il y a une étiquette à la ligne numero i, à l'indice i du tableau on la trouvera*/
+/*Dans le cas contraire, il y aura une chaine vide*/
+
+/*Si la recuperation c'est bien passé on renvoie 0, sinon -1*/
+
+  FILE* fichier=NULL;
+  fichier=fopen(nom_fichier,"r"); /*On ouvre le fichier contenant le langage assembleur.*/
+
+  if(fichier!=NULL){ /*On verifie que le fichier c'est bien ouvert.*/
+
+    for(int i=0;i<nombre_ligne;i++){
+
+      /*On recupere chaque ligne dans un tableau de char ligne.*/
+      char ligne[nombre_caractere_max_ligne];
+      fgets(ligne,nombre_caractere_max_ligne,fichier);
+
+
+      /*Puis on regarde est ce que le carcatere ':' est présent...*/
+      if(strstr(ligne,":")==NULL){  /*Si il ne l'est pas on a pas d'étiquette, et on met dans tab_etiquette une chaine vide.*/
+        tab_etiquette[i]="";
+      }
+      else{ /*Sinon, on essayera de récuperer dans ligne, seulement l'étiquette. (Sachant que tout élèment avant le carctère ':' est un carcatère de l'etiquette.)*/
+
+        /*On compte le nombre de caractère dans la ligne avant ':'*/
+        int nombre_occurence_etiquette=0;
+        while(ligne[nombre_occurence_etiquette]!=':'){
+          nombre_occurence_etiquette++;
+        }
+
+        /*Puis on alloue un espace mémoire de taille suffisante pour pouvoir stocker par la suite cette etiquette.*/
+        /*Attention de ne pas oublier l'espace necessaire pour l'octet nul. D'où le plus 1.*/
+        tab_etiquette[i]=malloc((nombre_occurence_etiquette+1)*sizeof(char));
+
+        /*On verifie au prealable que l'espace memoire necessaire nous a bien été mis a disposition.*/
+        if(tab_etiquette[i]==NULL){
+          return -1;
+        }
+
+        /*Puis on recopie l'etiquette dans cette espace memoire.*/
+        for(int j=0;j<nombre_occurence_etiquette;j++){
+          tab_etiquette[i][j]=ligne[j];
+        }
+        tab_etiquette[i][nombre_occurence_etiquette]='\0'; /*Sans oublier l'octect nul.*/
+      }
+    }
+
+    fclose(fichier);  /*On ferme le fichier.*/
+    return 0;
+  }
+
+  else{
+    fclose(fichier); /*On ferme le fichier.*/
+    return -1;
+  }
+}
 
 int main(int argc,char* argv[]){
 
   actualisation_fichier_code_assembleur(argv[1]);
   int nombre_ligne=nombre_ligne_fichier(argv[1]); /*On récupère le nombre de ligne dans notre fichier (pour etre exact le nombre de fois ou on a clique sur la touche entree pour faire un saut de ligne.)*/
-  int tab_instruction_courante[nombre_ligne];
-  traduction_instruction_octect_poids_fort(argv[1],nombre_ligne,&tab_instruction_courante[0]);
+  int tab_instruction_courante_decimale[nombre_ligne];
+  char* tab_etiquette[nombre_ligne];
+
+  traduction_instruction_octect_poids_fort(argv[1],nombre_ligne,&tab_instruction_courante_decimale[0]);
+  recuperation_etiquette(argv[1],nombre_ligne,tab_etiquette);
 
   for(int i=0;i<nombre_ligne;i++){
-    printf("%d\n",tab_instruction_courante[i]);
+    if(strcmp(tab_etiquette[i],"")!=0){
+      printf("Ligne %d : Instruction numero %d et l'etiquette est %s.\n",i,tab_instruction_courante_decimale[i],tab_etiquette[i]);
+    }
+    else{
+      printf("Ligne %d : Instruction numero %d et pas d'etiquette.\n",i,tab_instruction_courante_decimale[i]);
+    }
+
   }
 
   return 0;
