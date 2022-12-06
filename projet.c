@@ -9,6 +9,7 @@
 char* Instruction[]={"push","push#","ipush","pop","ipop","dup","op","jmp","jpz","rnd","read","write","call","ret","halt"};
 
 
+
 int actualisation_fichier_code_assembleur(char* nom_fichier){
 
 /*On rajoute une ligne en fin de fichier, sinon la dernière ligne ne pourra pas être lu dans les fonctions prochaines...
@@ -178,8 +179,8 @@ int recuperation_etiquette(char* nom_fichier,int nombre_ligne,char* tab_etiquett
 
 
       /*Puis on regarde est ce que le carcatere ':' est présent...*/
-      if(strstr(ligne,":")==NULL){  /*Si il ne l'est pas on a pas d'étiquette, et on met dans tab_etiquette une chaine vide.*/
-        tab_etiquette[i]="";
+      if(strstr(ligne,":")==NULL){  /*Si il ne l'est pas on a pas d'étiquette, et on met dans tab_etiquette la valeur NULL.*/
+        tab_etiquette[i]=NULL;
       }
       else{ /*Sinon, on essayera de récuperer dans ligne, seulement l'étiquette. (Sachant que tout élèment avant le carctère ':' est un carcatère de l'etiquette.)*/
 
@@ -216,25 +217,132 @@ int recuperation_etiquette(char* nom_fichier,int nombre_ligne,char* tab_etiquett
   }
 }
 
+int recuperation_donnee(char* nom_fichier,int nombre_ligne,int *tab_instruction_courante_decimale,char* tab_etiquette[],int *tab_donnee){
+  /*
+  Dans cette fonction on va recuperer dans le tableau l'ensemble des donnees necessaire pour pouvoir ecrire le fichier en langage machine.
+  Pour cela on dispose des instruction sous format decimal dans le tableau tab_instruction_courante_decimale et des etiquettes dans le tableau tab_etiquette.
+  L'indice i correspond à la ligne i. Ainsi, a la ligne i on trouve l'instruction tab_instruction_courante_decimale[i] et l'etiquette tab_etiquette[i].
+  */
+
+  /*On renvoie 0 si la recuperation c'est bien passé, -1 sinon.*/
+
+  /*On suppose que le fichier ne contient pas d'erreur de syntaxe.*/
+
+
+  FILE* fichier=NULL;
+  fichier=fopen(nom_fichier,"r");
+
+  if(fichier!=NULL){
+
+    char ligne[nombre_caractere_max_ligne]; /*On initialise un tableau de char ligne qui recuperera chaque ligne.*/
+
+    for(int i=0;i<nombre_ligne;i++){ /*On boucle donc sur chaque ligne.*/
+
+      /*
+      Methode de recherche : Dans notre cas il y a 4 cas.
+
+      Cas 1:
+      Dans la ligne, il y a une instruction, qui ne necessite pas de donnee : on mettra la valeur 0 dans le tableau tab_donnee.
+
+      Cas2 :
+      Dans la ligne, il y a une instruction, qui necessite une donnee : on recupere la donnee et on la met dans le tableau tab_donnee.
+
+      Cas 3:
+      Dans la ligne, il y a une instruction, qui necessite le traitement des etiquettes : on recupere la valeur qu'il faut et on la met dans le tableau tab_donnee.
+
+      Cas 4:
+      On traite ici le cas des lignes supplementaire en fin de fichier.
+
+
+      On utilisera un if pour voir a chaque fois dans quel cas nous sommes.
+
+      */
+
+      /*Cas 1 :*/
+      if( ((tab_instruction_courante_decimale[i]==2) || (tab_instruction_courante_decimale[i]==4) || (tab_instruction_courante_decimale[i]==5) || (tab_instruction_courante_decimale[i]==13) || (tab_instruction_courante_decimale[i]==14)) ){
+        fgets(ligne,nombre_caractere_max_ligne,fichier); //ESSENTIEL MEME SI ON UTILISE PAS. On doit pouvoir a chaque fois, decaler le curseur virtuel du fichier à la ligne associee.
+        tab_donnee[i]=0;
+        continue;
+      }
+
+
+      /*Cas 2 :*/
+      if( (tab_instruction_courante_decimale[i]==0) || (tab_instruction_courante_decimale[i]==3) || (tab_instruction_courante_decimale[i]==10) || (tab_instruction_courante_decimale[i]==11) || (tab_instruction_courante_decimale[i]==6) || (tab_instruction_courante_decimale[i]==1) || (tab_instruction_courante_decimale[i]==9) ){
+        fgets(ligne,nombre_caractere_max_ligne,fichier);
+
+        /*On boucle sur les caracteres de la ligne. On cherche la premiere occurence correspondant a un chiffre (donc 0 1 2 3 4 5 6 7 8 9), ce qui nous indique le debut de la donnee a recuperer.*/
+        for(int j=0;j<strlen(ligne);j++){
+
+          if(ligne[j]=='0' || ligne[j]=='1' || ligne[j]=='2' || ligne[j]=='3' || ligne[j]=='4' || ligne[j]=='5' || ligne[j]=='6' || ligne[j]=='7' || ligne[j]=='8' || ligne[j]=='9'){
+            tab_donnee[i]=strtol(&ligne[j],NULL,10); /*On recupere la donnee sous forme entiere !*/
+            break; /*NECESSAIRE : strtol va renvoyer toute la donnee à partir de l'adresse de ligne[j]. On recupere donc en une fois notre donee.*/
+          }
+        }
+        continue;
+      }
+
+
+
+      /*Cas 3 :*/
+      if((tab_instruction_courante_decimale[i]==7) || (tab_instruction_courante_decimale[i]==8) || (tab_instruction_courante_decimale[i]==10)){
+        fgets(ligne,nombre_caractere_max_ligne,fichier);
+
+        /*On boucle ici, sur le nombre de ligne. ON cherche ici a savoir quel etiquette est presente apres l'instruction.*/
+        for(int j=0;j<nombre_ligne;j++){
+          if(tab_etiquette[j]!=NULL && strstr(ligne,tab_etiquette[j])!=NULL){
+            tab_donnee[i]=j-i-1;  // ligne ou etiquette est presente=j  ligne ou l'on est = i
+            break;
+          }
+        }
+        continue;
+      }
+
+
+
+      /*Cas 4 :*/
+      if(tab_instruction_courante_decimale[i]==100){
+        /*On sait que par defaut, on met la valeur 100 si il n'y a pas d'instruction à la ligne considerer.*/
+        fgets(ligne,nombre_caractere_max_ligne,fichier);
+        tab_donnee[i]=0; /*Valeur par defaut. On ne veut pas que notre tableau de donnee soit vide.*/
+        continue;
+      }
+    }
+
+
+    fclose(fichier);
+    return 0;
+  }
+
+  else{
+    fclose(fichier);
+    return -1;
+  }
+}
+
+
 int main(int argc,char* argv[]){
 
   actualisation_fichier_code_assembleur(argv[1]);
   int nombre_ligne=nombre_ligne_fichier(argv[1]); /*On récupère le nombre de ligne dans notre fichier (pour etre exact le nombre de fois ou on a clique sur la touche entree pour faire un saut de ligne.)*/
   int tab_instruction_courante_decimale[nombre_ligne];
   char* tab_etiquette[nombre_ligne];
+  int tab_donnee[nombre_ligne];
 
   traduction_instruction_octect_poids_fort(argv[1],nombre_ligne,&tab_instruction_courante_decimale[0]);
   recuperation_etiquette(argv[1],nombre_ligne,tab_etiquette);
+  recuperation_donnee(argv[1],nombre_ligne,tab_instruction_courante_decimale,tab_etiquette,tab_donnee);
 
-  for(int i=0;i<nombre_ligne;i++){
-    if(strcmp(tab_etiquette[i],"")!=0){
-      printf("Ligne %d : Instruction numero 0%x et l'etiquette est %s.\n",i,tab_instruction_courante_decimale[i],tab_etiquette[i]);
+  /*for(int i=0;i<nombre_ligne;i++){
+    if(tab_etiquette[i]!=NULL){
+      printf("Ligne %d : Instruction numero 0%x, l'etiquette est %s, et la donnee est %d.\n",i,tab_instruction_courante_decimale[i],tab_etiquette[i],tab_donnee[i]);
     }
     else{
-      printf("Ligne %d : Instruction numero 0%x et pas d'etiquette.\n",i,tab_instruction_courante_decimale[i]);
+      printf("Ligne %d : Instruction numero 0%x, pas d'etiquette et la donnee est %d.\n",i,tab_instruction_courante_decimale[i],tab_donnee[i]);
     }
+  }*/
 
+  for(int i=0;i<nombre_ligne;i++){
+      printf("0%x %08x\n",tab_instruction_courante_decimale[i],tab_donnee[i]);
   }
-
   return 0;
 }
