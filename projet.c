@@ -319,6 +319,24 @@ int recuperation_donnee(char* nom_fichier,int nombre_ligne,int *tab_instruction_
   }
 }
 
+int creation_fichier_langage_assembleur(int *tab_instruction_courante_decimale,int *tab_donnee){
+
+  FILE* fichier=NULL;
+  fichier=fopen("langage_machine.txt","w");
+
+  if(fichier!=NULL){
+    for(int i=0;tab_instruction_courante_decimale[i]!=100;i++){
+      fprintf(fichier,"0%x %08x\n",tab_instruction_courante_decimale[i],tab_donnee[i]); fflush(fichier);
+    }
+    fclose(fichier);
+    return 0;
+  }
+
+  else{
+    fclose(fichier);
+    return -1;
+  }
+}
 
 int main(int argc,char* argv[]){
 
@@ -331,6 +349,7 @@ int main(int argc,char* argv[]){
   traduction_instruction_octect_poids_fort(argv[1],nombre_ligne,&tab_instruction_courante_decimale[0]);
   recuperation_etiquette(argv[1],nombre_ligne,tab_etiquette);
   recuperation_donnee(argv[1],nombre_ligne,tab_instruction_courante_decimale,tab_etiquette,tab_donnee);
+  creation_fichier_langage_assembleur(tab_instruction_courante_decimale,tab_donnee);
 
   /*for(int i=0;i<nombre_ligne;i++){
     if(tab_etiquette[i]!=NULL){
@@ -341,8 +360,10 @@ int main(int argc,char* argv[]){
     }
   }*/
 
-  for(int i=0;i<nombre_ligne;i++){
+  /*for(int i=0;i<nombre_ligne;i++){
       printf("0%x %08x\n",tab_instruction_courante_decimale[i],tab_donnee[i]);
   }
-  return 0;
+  return 0;*/
+
+
 }
