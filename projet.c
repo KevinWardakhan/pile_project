@@ -9,7 +9,6 @@
 char* Instruction[]={"push","push#","ipush","pop","ipop","dup","op","jmp","jpz","rnd","read","write","call","ret","halt"};
 
 
-
 int actualisation_fichier_code_assembleur(char* nom_fichier){
 
 /*On rajoute une ligne en fin de fichier, sinon la dernière ligne ne pourra pas être lu dans les fonctions prochaines...
@@ -322,7 +321,7 @@ int recuperation_donnee(char* nom_fichier,int nombre_ligne,int *tab_instruction_
 int creation_fichier_langage_assembleur(int *tab_instruction_courante_decimale,int *tab_donnee){
 
   FILE* fichier=NULL;
-  fichier=fopen("langage_machine.txt","w");
+  fichier=fopen("hexa.txt","w");
 
   if(fichier!=NULL){
     for(int i=0;tab_instruction_courante_decimale[i]!=100;i++){
@@ -365,5 +364,9 @@ int main(int argc,char* argv[]){
   }
   return 0;*/
 
-
+  for(int i=0;i<nombre_ligne;i++){
+    if(tab_etiquette[i]!=NULL){
+      free(tab_etiquette[i]);
+    }
+  }
 }
