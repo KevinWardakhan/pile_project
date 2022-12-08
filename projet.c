@@ -9,13 +9,43 @@
 char* Instruction[]={"push","push#","ipush","pop","ipop","dup","op","jmp","jpz","rnd","read","write","call","ret","halt"};
 
 
+/*-------------------------------Prototypes-----------------------------------*/
+
+int actualisation_fichier_code_assembleur(char*);
+
+int nombre_ligne_fichier(char*);
+
+int traduction_instruction_octect_poids_fort(char*,int ,int*);
+
+int recuperation_etiquette(char* ,int ,char**);
+
+int recuperation_donnee(char* ,int ,int* ,char** ,int*);
+
+int creation_fichier_langage_machine(int* ,int*);
+
+
+/*--------------------------------Fonctions-----------------------------------*/
+
 int actualisation_fichier_code_assembleur(char* nom_fichier){
 
 /*On rajoute une ligne en fin de fichier, sinon la dernière ligne ne pourra pas être lu dans les fonctions prochaines...
 ...si l'utilisateur n'appuie pas sur entrée à la fin de son fichier. Cette ligne supplémentaire nous assure...
 ...donc que la dernière ligne puisse être, plus tard lu si on utilise fgets.*/
 
-  FILE* fichier=NULL;
+/*Attention dans une premiere partie on ne rajoutera pas directement la ligne : cela creera un nouveau fichier, s'il n'est pas existant.*/
+/*On cherche donc d'abord à le lire, pour verifier son existence.*/
+
+  FILE* fichier=NULL;                 /*On verifie ici l'existence du fichier...*/
+  fichier=fopen(nom_fichier,"r");
+  if(fichier==NULL){
+    fclose(fichier);
+    return -1;
+  }
+  fclose(fichier);
+
+
+
+  fichier=NULL;                /*On passe, a l'ajout si le fichier existe...*/
   fichier=fopen(nom_fichier,"a");
 
   if(fichier!=NULL){
@@ -253,8 +283,6 @@ int recuperation_donnee(char* nom_fichier,int nombre_ligne,int *tab_instruction_
       On traite ici le cas des lignes supplementaire en fin de fichier.
 
 
-      On utilisera un if pour voir a chaque fois dans quel cas nous sommes.
-
       */
 
       /*Cas 1 :*/
@@ -270,9 +298,23 @@ int recuperation_donnee(char* nom_fichier,int nombre_ligne,int *tab_instruction_
         fgets(ligne,nombre_caractere_max_ligne,fichier);
 
         /*On boucle sur les caracteres de la ligne. On cherche la premiere occurence correspondant a un chiffre (donc 0 1 2 3 4 5 6 7 8 9), ce qui nous indique le debut de la donnee a recuperer.*/
+        /*Attention, une etiquette peut avoir des chiffres. SI et seulement si il y a une etiquette, on commence notre recherche apres avoir croise la carctere ':' */
+        /*On s'aidera pour cela d'un drapeau.*/
+
+
+        int flag=1;
+        if(tab_etiquette[i]==NULL){
+          flag=0;
+        }
+
+
         for(int j=0;j<strlen(ligne);j++){
 
-          if(ligne[j]=='0' || ligne[j]=='1' || ligne[j]=='2' || ligne[j]=='3' || ligne[j]=='4' || ligne[j]=='5' || ligne[j]=='6' || ligne[j]=='7' || ligne[j]=='8' || ligne[j]=='9'){
+          if(ligne[j]==':'){  /*Si on croise ':', on met flag a 0. Si il n'y a pas d'etiquette, on deja flag a 0. Donc pas de probleme.*/
+            flag=0;
+          }
+
+          if( (ligne[j]=='0' || ligne[j]=='1' || ligne[j]=='2' || ligne[j]=='3' || ligne[j]=='4' || ligne[j]=='5' || ligne[j]=='6' || ligne[j]=='7' || ligne[j]=='8' || ligne[j]=='9') && flag==0 ) {
             tab_donnee[i]=strtol(&ligne[j],NULL,10); /*On recupere la donnee sous forme entiere !*/
             break; /*NECESSAIRE : strtol va renvoyer toute la donnee à partir de l'adresse de ligne[j]. On recupere donc en une fois notre donee.*/
           }
@@ -318,7 +360,8 @@ int recuperation_donnee(char* nom_fichier,int nombre_ligne,int *tab_instruction_
   }
 }
 
-int creation_fichier_langage_assembleur(int *tab_instruction_courante_decimale,int *tab_donnee){
+int creation_fichier_langage_machine(int *tab_instruction_courante_decimale,int *tab_donnee){
+  /*Apres avoir recupere les instruction dans un tableau et les donnee dans un tableau, on peut a present creer le fichier contenant le langage machine.*/
 
   FILE* fichier=NULL;
   fichier=fopen("hexa.txt","w");
@@ -337,36 +380,102 @@ int creation_fichier_langage_assembleur(int *tab_instruction_courante_decimale,i
   }
 }
 
+
+
+/*---------------------------Programme Principale-----------------------------*/
+
 int main(int argc,char* argv[]){
 
-  actualisation_fichier_code_assembleur(argv[1]);
-  int nombre_ligne=nombre_ligne_fichier(argv[1]); /*On récupère le nombre de ligne dans notre fichier (pour etre exact le nombre de fois ou on a clique sur la touche entree pour faire un saut de ligne.)*/
+  int verif=0; //Permettre de savoir si les differentes fonctions se sont bien deroule.
+
+
+
+  //On commence par ajouter une ligne a la fin du fichier contenant le code en langage assembleur, pour etre sur de pouvoir lire toute les lignes.
+  //On verifie en même temps, si le fichier existe.
+  verif=actualisation_fichier_code_assembleur(argv[1]);
+  if(verif==-1){
+    printf("Ouverture du fichier Impossible. Fichier Inexistant."); //Le programme s'arrete si erreur, il y a.
+    return 0;
+  }
+
+
+  //On recupere d'abord le nombre de ligne dans le fichier.
+  //Pour etre exact le nombre de fois ou on a clique sur la touche entree pour faire un saut de ligne. Detail tres tres important.
+  //On recuperera donc surement des lignes inutiles. A nous de faire attention plus tard, pour bien les reperer.
+  int nombre_ligne=nombre_ligne_fichier(argv[1]);
+  if(nombre_ligne==-1){
+    printf("Erreur lors du calcul du nombre de ligne. Ouverture du fichier Impossible."); //Le programme s'arrete si erreur, il y a.
+    return 0;
+  }
+
+  //On initialise, trois tableau qui recupereront nos differents outils pour creer le fichier en langage machine.
+  //Il y a peut etre des cases en trop (Nombre de ligne peut etre plus grand que prevu)
+  //On reglera ce probleme en remplissant le tableau tab_instruction_courante_decimale par l'entier 100 lorsque c'est la cas.
+  //C'est notre point de repere.
+
   int tab_instruction_courante_decimale[nombre_ligne];
-  char* tab_etiquette[nombre_ligne];
+  char* tab_etiquette[nombre_ligne];  //tab_etiquette contiendra la valeurs NULL si il n'y a pas d'etiquette, l'etiquette sinon.
   int tab_donnee[nombre_ligne];
 
-  traduction_instruction_octect_poids_fort(argv[1],nombre_ligne,&tab_instruction_courante_decimale[0]);
-  recuperation_etiquette(argv[1],nombre_ligne,tab_etiquette);
-  recuperation_donnee(argv[1],nombre_ligne,tab_instruction_courante_decimale,tab_etiquette,tab_donnee);
-  creation_fichier_langage_assembleur(tab_instruction_courante_decimale,tab_donnee);
 
-  /*for(int i=0;i<nombre_ligne;i++){
-    if(tab_etiquette[i]!=NULL){
-      printf("Ligne %d : Instruction numero 0%x, l'etiquette est %s, et la donnee est %d.\n",i,tab_instruction_courante_decimale[i],tab_etiquette[i],tab_donnee[i]);
-    }
-    else{
-      printf("Ligne %d : Instruction numero 0%x, pas d'etiquette et la donnee est %d.\n",i,tab_instruction_courante_decimale[i],tab_donnee[i]);
-    }
-  }*/
 
-  /*for(int i=0;i<nombre_ligne;i++){
-      printf("0%x %08x\n",tab_instruction_courante_decimale[i],tab_donnee[i]);
+  //On recupere les instructions.
+  verif=traduction_instruction_octect_poids_fort(argv[1],nombre_ligne,&tab_instruction_courante_decimale[0]);
+  if(verif==-1){
+    printf("Erreur lors de la recuperation des instructions assembleurs. Ouverture du fichier Impossible."); //Le programme s'arrete si erreur, il y a.
+    return 0;
   }
-  return 0;*/
 
+
+  //On recupere ensuite les etiquettes.
+  //Attention le tableau d'etiquette est un tableau de char*.
+  //Dans chaque case du tableau, on a utiliser malloc pour pouvoir ecrire notre chaine de caractere.
+  //Ne pas oublier de liberer l'espace memoire à la fin.
+  verif=recuperation_etiquette(argv[1],nombre_ligne,tab_etiquette);
+  if(verif==-1){
+    printf("Erreur lors de la recuperation des etiquettes. Ouverture du fichier Impossible.");//Le programme s'arrete si erreur, il y a.
+    return 0;
+  }
+
+
+  //Enfin, on recupere les donnes.
+  verif=recuperation_donnee(argv[1],nombre_ligne,tab_instruction_courante_decimale,tab_etiquette,tab_donnee);
+  if(verif==-1){
+
+    printf("Erreur lors de la recuperation des donnees. Ouverture du fichier Impossible.");//Le programme s'arrete si erreur, il y a.
+
+    for(int i=0;i<nombre_ligne;i++){ //Mais avant l'arret, on n'oublie pas de liberer l'espace memoire. Si on est arrivee ici c'est que le tableau tab_etiquette a ete cree et remplis.
+      if(tab_etiquette[i]!=NULL){ //On fait attention lors de la liberation ! tab_etiquette possede la valeur NULL si il n'y avait pas d'etiquette. On verifie avant que ce ne soit pas le cas, avant d'utiliser free().
+        free(tab_etiquette[i]);
+      }
+    }
+    return 0;
+  }
+
+
+  //On creer maintenant le fichier contenant le langage machine.
+  verif=creation_fichier_langage_machine(tab_instruction_courante_decimale,tab_donnee);
+  if(verif==-1){
+
+    printf("Erreur lors de la creation du fichier en langage machine. Ouverture du fichier Impossible."); //Le programme s'arrete si erreur, il y a.
+
+    for(int i=0;i<nombre_ligne;i++){//Mais avant l'arret, on n'oublie pas de liberer l'espace memoire que l'on a alloue.
+      if(tab_etiquette[i]!=NULL){
+        free(tab_etiquette[i]);
+      }
+    }
+    return 0;
+  }
+
+
+  //Si on arrive la, c'est que tout c'est bien passe.
+  //On n'oublie pas de liberer l'espace memoire.
   for(int i=0;i<nombre_ligne;i++){
     if(tab_etiquette[i]!=NULL){
       free(tab_etiquette[i]);
     }
   }
+
+  printf("Le fichier hexa.txt a ete cree avec succes!"); //On signale que la traduction c'est bien effectue!
+  return 0;
 }
