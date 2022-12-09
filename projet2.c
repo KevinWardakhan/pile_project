@@ -10,7 +10,7 @@ typedef struct{
 void AfficherPile(const Machine* m){
     int i=0;
     printf("PC: %d\nSP: %d\n",m->PC,m->SP);
-    while (i<=(m->SP)){          
+    while (i<=(m->SP)){   
         printf("Tableau_pile[%d]=%d\n",i,m->tableau_pile[i]); 
         i++;
     }
@@ -27,13 +27,20 @@ void push_constante(Machine* m, int entier){
     m->SP++;
 }
 
-void ipush(Machine* m, int n){
-    (m->tableau_pile[m->SP])=(m->tableau_pile[n]);  //l'élement au sommet de la pile est remplacé par l'élément à l'adresse n
+void ipush(Machine* m){
+    int n=m->tableau_pile[(m->SP)-1];
+    m->tableau_pile[(m->SP)-1]=m->tableau_pile[n]; 
 }
 
 void pop(Machine* m,int x){
     (m->SP)--;
     (m->tableau_pile[x]=(m->tableau_pile[m->SP]));
+}
+
+void ipop(Machine* m){
+    int n=m->tableau_pile[(m->SP)-1];
+    m->tableau_pile[n]=m->tableau_pile[(m->SP)-2];
+    m->SP-=2;
 }
 
 void dup(Machine* m){
@@ -163,6 +170,15 @@ void read(Machine* m,int x){
 
 void write(Machine* m,int x){
     printf("Valeur de la variable à l'adresse %d: %d\n",x,m->tableau_pile[x]);
+}
+
+void call(Machine* m,int Adr){
+    push_constante(m,(m->PC));  //pas sur
+    m->PC+=Adr;
+}
+
+void ret(Machine* m){
+    pop(m,m->PC);   //pas sur non plus sah
 }
 
 void halt(void){
