@@ -10,7 +10,7 @@ typedef struct{
 void AfficherPile(const Machine* m){
     int i=0;
     printf("PC: %d\nSP: %d\n",m->PC,m->SP);
-    while (m->tableau_pile[i]!=NULL){   //while i<=m->SP ?               
+    while (i<=(m->SP)){          
         printf("Tableau_pile[%d]=%d\n",i,m->tableau_pile[i]); 
         i++;
     }
