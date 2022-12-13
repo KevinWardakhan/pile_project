@@ -20,7 +20,7 @@ void liberation_espace_memoire_tab_etiquette(int,char**);
 int verif_instruction_donnee(char*,int,char**);
 int traduction_instruction_octect_poids_fort(char*,int,int*);
 int recuperation_donnee(char*,int,int*,char**,int*);
-int creation_fichier_langage_machine(int*,int*);
+int creation_fichier_langage_machine(int,int*,int*);
 
 /*--------------------------------Fonctions-----------------------------------*/
 
@@ -1064,14 +1064,14 @@ int recuperation_donnee(char* nom_fichier,int nombre_ligne,int *tab_instruction_
   }
 }
 
-int creation_fichier_langage_machine(int *tab_instruction_courante_decimale,int *tab_donnee){
+int creation_fichier_langage_machine(int nombre_ligne,int *tab_instruction_courante_decimale,int *tab_donnee){
   /*Apres avoir recupere les instruction dans un tableau et les donnee dans un tableau, on peut a present creer le fichier contenant le langage machine.*/
 
   FILE* fichier=NULL;
   fichier=fopen("hexa.txt","w");
 
   if(fichier!=NULL){
-    for(int i=0;tab_instruction_courante_decimale[i]!=100;i++){
+    for(int i=0;(tab_instruction_courante_decimale[i]!=100 && i<nombre_ligne);i++){
       fprintf(fichier,"0%x %08x\n",tab_instruction_courante_decimale[i],tab_donnee[i]); fflush(fichier);
     }
     fclose(fichier);
@@ -1211,6 +1211,7 @@ int main(int argc,char* argv[]){
 
   //Enfin, on recupere les donnees.
   verif=recuperation_donnee(argv[1],nombre_ligne,tab_instruction_courante_decimale,tab_etiquette,tab_donnee);
+
   if(verif==-1){
     printf("Erreur lors de la recuperation des donnees. Ouverture du fichier impossible. Traduction en langage machine impossible.\n");
     liberation_espace_memoire_tab_etiquette(nombre_ligne,tab_etiquette);
@@ -1218,7 +1219,9 @@ int main(int argc,char* argv[]){
   }
 
   //On cree maintenant le fichier contenant le langage machine.
-  verif=creation_fichier_langage_machine(tab_instruction_courante_decimale,tab_donnee);
+  verif=creation_fichier_langage_machine(nombre_ligne,tab_instruction_courante_decimale,tab_donnee);
+
+
   if(verif==-1){
     printf("Erreur lors de la creation du fichier en langage machine. Ouverture du fichier impossible. Traduction en langage machine impossible.\n");
     liberation_espace_memoire_tab_etiquette(nombre_ligne,tab_etiquette);
@@ -1228,4 +1231,5 @@ int main(int argc,char* argv[]){
   printf("Le fichier hexa.txt a ete cree avec succes!");
   liberation_espace_memoire_tab_etiquette(nombre_ligne,tab_etiquette);
   return 0;
+
 }
