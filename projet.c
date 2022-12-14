@@ -8,7 +8,15 @@
 
 char* Instruction[]={"push","push#","ipush","pop","ipop","dup","op","jmp","jpz","rnd","read","write","call","ret","halt"};
 
+/*------------------------------Informations----------------------------------*/
 
+/*
+On va traduire un fichier contenant le langage assembleur en un fichier contenant
+le langage machine. Attention, la syntaxe doit être bien respecter!
+On renverra une erreur si il y a un saut de ligne inutile (même à la fin).
+On rajoute a un moment un saut de ligne pour pouvoir recuperer toute les lignes.
+Attention a bien l'effacer avant la reutilisation du programme.
+*/
 
 /*-------------------------------Prototypes-----------------------------------*/
 int verif_fichier_vide(char*);
@@ -302,17 +310,12 @@ int verif_instruction_donnee(char* nom_fichier,int nombre_ligne,char* tab_etique
 
       fgets(ligne,nombre_caractere_max_ligne,fichier);/*On recupere notre ligne.*/
 
-
-      if( strlen(ligne)==1 && ligne[0]=='\n' && i==nombre_ligne-1){ /*J'ai pu parcourir toute la boucle sans probleme jusqu'a la fin de mon fichier.*/
-        return -1;
-      }
-
-
       if(tab_etiquette[i]==NULL){
 
         int j=0; /*Compteur que l'on utilisera comme indice pour parcourir la ligne.*/
 
         if(ligne[j]=='\n'){
+          fclose(fichier);
           return i+4*nombre_ligne; /*On a un saut de ligne a la ligne i. Renvoie une erreur.*/
         }
 
@@ -324,6 +327,7 @@ int verif_instruction_donnee(char* nom_fichier,int nombre_ligne,char* tab_etique
          /*Une fois avoir ignore les espaces et tabulation, on est cense tomber sur une instruction...*/
 
         if(ligne[j]=='\n'){
+          fclose(fichier);
           return i+4*nombre_ligne; /*ligne vide renvoyer une erreur*/
         }
 
@@ -338,6 +342,7 @@ int verif_instruction_donnee(char* nom_fichier,int nombre_ligne,char* tab_etique
           ligne_aide_verif[k]='\0'; /*On oublie pas l'octet nul a la fin. */
 
           if(ligne[j]=='\t'){
+            fclose(fichier);
             return i+2*nombre_ligne; /*On a une tabulation au lieu d'un espace apres l'instruction. Renvoyer une erreur*/
           }
 
@@ -349,6 +354,7 @@ int verif_instruction_donnee(char* nom_fichier,int nombre_ligne,char* tab_etique
           if(strcmp(ligne_aide_verif,"ipush")==0 || strcmp(ligne_aide_verif,"ipop")==0 || strcmp(ligne_aide_verif,"dup")==0 || strcmp(ligne_aide_verif,"ret")==0 || strcmp(ligne_aide_verif,"halt")==0 ){
 
             if(ligne[j]!='\n'){
+              fclose(fichier);
               return i+nombre_ligne; /*Renvoyer une erreur. On a une donnee apres l'instruction. Ce n'est pas possible.*/
             }
           }
@@ -358,6 +364,7 @@ int verif_instruction_donnee(char* nom_fichier,int nombre_ligne,char* tab_etique
 
 
               if(ligne[j]=='\n'){
+                fclose(fichier);
                 return i+nombre_ligne; /*Renvoyer une erreur. On a rien apres pas possible.Forcement il y a une etiquette*/
               }
               j++; /*On saute l'espace.*/
@@ -381,6 +388,7 @@ int verif_instruction_donnee(char* nom_fichier,int nombre_ligne,char* tab_etique
 
 
               if(verif_etiquette_existante==1){
+                fclose(fichier);
                 return i+nombre_ligne; /*Donnee erronee : pas d'etiquette correpondante.*/
               }
 
@@ -411,18 +419,21 @@ int verif_instruction_donnee(char* nom_fichier,int nombre_ligne,char* tab_etique
                   }
 
                   if(verif_chiffre_uniquement==1){
+                    fclose(fichier);
                     return i+nombre_ligne; /*On retourne une erreur. On ne peut pas avoir que des chiffres dans notre donnee/parametre */
                   }
                   donnee_aide_verif[l]='\0';
 
                   /*On verifie la longueur du nombre recolte.*/
                   if(strlen(donnee_aide_verif)>=5){
+                    fclose(fichier);
                     return i+nombre_ligne; /*Retourner une erreur : donnee trop grande*/
                   }
 
                   /*On affine notre verification...*/
                   verif_chiffre_uniquement=strtol(donnee_aide_verif,NULL,10);
                   if(verif_chiffre_uniquement>5000){
+                    fclose(fichier);
                     return i+nombre_ligne; /*Retourner une erreur : donnee trop grande*/
                   }
                 }
@@ -453,17 +464,20 @@ int verif_instruction_donnee(char* nom_fichier,int nombre_ligne,char* tab_etique
                     }
 
                     if(verif_chiffre_uniquement==1){
+                      fclose(fichier);
                       return i+nombre_ligne;/*On retourne une erreur. On ne peut pas avoir que des chiffres dans notre donnee/parametre */
                     }
                     donnee_aide_verif[l]='\0';
 
                     /*On verifie la longueur du nombre recolte.*/
                     if(strlen(donnee_aide_verif)>=3){
+                      fclose(fichier);
                       return i+nombre_ligne;/*Retourner une erreur : donnee trop grande*/
                     }
                     /*On affine notre verification...*/
                     verif_chiffre_uniquement=strtol(donnee_aide_verif,NULL,10);
                     if(verif_chiffre_uniquement>15){
+                      fclose(fichier);
                       return i+nombre_ligne;/*Retourner une erreur : donnee trop grande*/
                     }
                   }
@@ -478,7 +492,7 @@ int verif_instruction_donnee(char* nom_fichier,int nombre_ligne,char* tab_etique
                     if(ligne[j]==' '){
 
                       j++;
-                      long long verif_chiffre_uniquement=0; /*On utilisera cette variable comme drapeau, puis comme aide a la averification du parametre. Type long long necessaire.*/
+                      long long int verif_chiffre_uniquement=0; /*On utilisera cette variable comme drapeau, puis comme aide a la averification du parametre. Type long long necessaire.*/
                       int l=0;
 
                       /*Avec cette instruction, on peut avoir un signe negatif. On ne l'oublie pas de traiter ce cas.*/
@@ -487,6 +501,7 @@ int verif_instruction_donnee(char* nom_fichier,int nombre_ligne,char* tab_etique
                         l++;
                         j++;
                         if(ligne[j]=='\n'){
+                          fclose(fichier);
                           return i+nombre_ligne;/*Retourner une erreur, on a que un moins ici*/
                         }
                       }
@@ -504,18 +519,16 @@ int verif_instruction_donnee(char* nom_fichier,int nombre_ligne,char* tab_etique
                       }
 
                       if(verif_chiffre_uniquement==1){
-                        return i+nombre_ligne;/*Retourner une erreur : on ne peut pas avoir d'autre donee que des chiffres*/
+                        fclose(fichier);
+                        return i+nombre_ligne;/*Retourner une erreur : on ne peut pas avoir d'autre donnee que des chiffres*/
                       }
                       donnee_aide_verif[l]='\0';
 
                       if(strlen(donnee_aide_verif)>=12){
+                        fclose(fichier);
                         return i+nombre_ligne; /*Retourner une erreur : donnee trop grande*/
                       }
-                      /*On affine notre verification...*/
-                      verif_chiffre_uniquement=strtol(donnee_aide_verif,NULL,10);
-                      if(verif_chiffre_uniquement>2147483647 || verif_chiffre_uniquement<-2147483648){ /*D'ou le type long long pour verif_chiffre_uniquement!*/
-                        return i+nombre_ligne; /*Retourner une erreur : donnee trop grande*/
-                      }
+                      /*On ne va pas affine notre verification...*/
                     }
 
 
@@ -545,21 +558,20 @@ int verif_instruction_donnee(char* nom_fichier,int nombre_ligne,char* tab_etique
                         }
 
                         if(verif_chiffre_uniquement==1){
+                          fclose(fichier);
                           return i+nombre_ligne; /*Retourner une erreur : On ne peut pas avoir d'autre donee que des chiffres*/
                         }
                         donnee_aide_verif[l]='\0';
 
                         if(strlen(donnee_aide_verif)>=11){
+                          fclose(fichier);
                           return i+nombre_ligne; //Retourner une erreur : donnee trop grande
-                        }
-                        verif_chiffre_uniquement=strtol(donnee_aide_verif,NULL,10);
-                        if(verif_chiffre_uniquement>2147483648){ /*rnd x renvoie un nombre aleatoire entre 0 et x-1.... */
-                          return i+nombre_ligne; //Retourner erreur par possible donnee trop grande
                         }
                       }
 
                     }
                     else{
+                      fclose(fichier);
                       return i;  /*On renvoie une erreur. L'instruction recolte n'est pas existante.*/
                     }
                   }
@@ -577,6 +589,7 @@ int verif_instruction_donnee(char* nom_fichier,int nombre_ligne,char* tab_etique
         int j=0; /*Compteur que l'on utilisera comme indice pour parcourir la ligne.*/
 
         if(ligne[j]=='\n'){
+          fclose(fichier);
           return i+4*nombre_ligne; /*On a un saut de ligne a la ligne i. Renvoie une erreur.*/
         }
 
@@ -588,6 +601,7 @@ int verif_instruction_donnee(char* nom_fichier,int nombre_ligne,char* tab_etique
         }
         j++;
         if(ligne[j]=='\n'){
+          fclose(fichier);
           return i+3*nombre_ligne; /*Rien apres l'etiquette renvoie erreur*/
         }
 
@@ -599,6 +613,7 @@ int verif_instruction_donnee(char* nom_fichier,int nombre_ligne,char* tab_etique
         }
 
         if(ligne[j]=='\n'){
+          fclose(fichier);
           return i+3*nombre_ligne; /*Rien apres l'etiquette. Renvoyer Erreur.*/
         }
 
@@ -613,6 +628,7 @@ int verif_instruction_donnee(char* nom_fichier,int nombre_ligne,char* tab_etique
 
           ligne_aide_verif[k]='\0';
           if(ligne[j]=='\t'){
+            fclose(fichier);
             return i+2*nombre_ligne; //tabulation au lieu de espace renvoyer une erreur
           }
 
@@ -621,6 +637,7 @@ int verif_instruction_donnee(char* nom_fichier,int nombre_ligne,char* tab_etique
           if(strcmp(ligne_aide_verif,"ipush")==0 || strcmp(ligne_aide_verif,"ipop")==0 || strcmp(ligne_aide_verif,"dup")==0 || strcmp(ligne_aide_verif,"ret")==0 || strcmp(ligne_aide_verif,"halt")==0 ){
 
             if(ligne[j]!='\n'){
+              fclose(fichier);
               return i+nombre_ligne; //renvoyer erreur. On a qql chose apres c'est pas possible pas de donnee normalement
             }
 
@@ -631,6 +648,7 @@ int verif_instruction_donnee(char* nom_fichier,int nombre_ligne,char* tab_etique
 
 
               if(ligne[j]=='\n'){
+                fclose(fichier);
                 return i+nombre_ligne; //renvoyer erreur. On a rien apres pas possible. Forcement il y a une etiquette
               }
               j++;
@@ -654,6 +672,7 @@ int verif_instruction_donnee(char* nom_fichier,int nombre_ligne,char* tab_etique
 
 
               if(verif_etiquette_existante==1){
+                fclose(fichier);
                 return i+nombre_ligne;//retourner erreur donnee mauvaise
               }
 
@@ -685,14 +704,17 @@ int verif_instruction_donnee(char* nom_fichier,int nombre_ligne,char* tab_etique
 
 
                   if(verif_chiffre_uniquement==1){
+                    fclose(fichier);
                     return i+nombre_ligne; //retourner une erreur peut pas avoir d'autre donee que des chiffres
                   }
 
                   if(strlen(donnee_aide_verif)>=5){
+                    fclose(fichier);
                     return i+nombre_ligne; //retourner une erreur : donnee trop grande
                   }
                   verif_chiffre_uniquement=strtol(donnee_aide_verif,NULL,10);
                   if(verif_chiffre_uniquement>5000){
+                    fclose(fichier);
                     return i+nombre_ligne; //retourner erreur pas possible donnee trop grande
                   }
                 }
@@ -722,15 +744,18 @@ int verif_instruction_donnee(char* nom_fichier,int nombre_ligne,char* tab_etique
                     }
 
                     if(verif_chiffre_uniquement==1){
+                      fclose(fichier);
                       return i+nombre_ligne; //retourner une erreur peut pas avoir d'autre donee que des chiffres
                     }
                     donnee_aide_verif[l]='\0';
 
                     if(strlen(donnee_aide_verif)>=3){
+                      fclose(fichier);
                       return i+nombre_ligne; //retourner une erreur : donnee trop grande
                     }
                     verif_chiffre_uniquement=strtol(donnee_aide_verif,NULL,10);
                     if(verif_chiffre_uniquement>15){
+                      fclose(fichier);
                       return i+nombre_ligne; //retourner erreur par possible donnee trop grande
                     }
                   }
@@ -753,6 +778,7 @@ int verif_instruction_donnee(char* nom_fichier,int nombre_ligne,char* tab_etique
                         l++;
                         j++;
                         if(ligne[j]=='\n'){
+                          fclose(fichier);
                           return i+nombre_ligne; //retourner une erreur on a que un moins
                         }
                       }
@@ -769,18 +795,15 @@ int verif_instruction_donnee(char* nom_fichier,int nombre_ligne,char* tab_etique
                       }
 
                       if(verif_chiffre_uniquement==1){
+                        fclose(fichier);
                         return i+nombre_ligne; //retourner une erreur, on ne peut pas avoir d'autre donee que des chiffres
                       }
                       donnee_aide_verif[l]='\0';
 
                       if(strlen(donnee_aide_verif)>=12){
+                        fclose(fichier);
                         return i+nombre_ligne; //retourner une erreur : donnee trop grande
                       }
-                      verif_chiffre_uniquement=strtol(donnee_aide_verif,NULL,10);
-                      if(verif_chiffre_uniquement>2147483647 || verif_chiffre_uniquement<-2147483649){
-                        return i+nombre_ligne; //retourner erreur par possible donnee trop grande
-                      }
-
                     }
 
 
@@ -810,16 +833,14 @@ int verif_instruction_donnee(char* nom_fichier,int nombre_ligne,char* tab_etique
                         }
 
                         if(verif_chiffre_uniquement==1){
+                          fclose(fichier);
                           return i+nombre_ligne; //retourner une erreur. On ne peut pas avoir d'autre donee que des chiffres
                         }
                         donnee_aide_verif[l]='\0';
 
                         if(strlen(donnee_aide_verif)>=11){
+                          fclose(fichier);
                           return i+nombre_ligne; //retourner une erreur : donnee trop grande
-                        }
-                        verif_chiffre_uniquement=strtol(donnee_aide_verif,NULL,10);
-                        if(verif_chiffre_uniquement>2147483648){
-                          return i+nombre_ligne; //retourner erreur par possible donnee trop grande
                         }
                       }
 
@@ -827,6 +848,7 @@ int verif_instruction_donnee(char* nom_fichier,int nombre_ligne,char* tab_etique
 
                     }
                     else{
+                      fclose(fichier);
                       return i; //renvoyer une erreur pas d'instruction correpondantes
                     }
                   }
@@ -1065,7 +1087,7 @@ int recuperation_donnee(char* nom_fichier,int nombre_ligne,int *tab_instruction_
 }
 
 int creation_fichier_langage_machine(int nombre_ligne,int *tab_instruction_courante_decimale,int *tab_donnee){
-  /*Apres avoir recupere les instruction dans un tableau et les donnee dans un tableau, on peut a present creer le fichier contenant le langage machine.*/
+  /*Apres avoir recupere les instructions dans un tableau et les donnees dans un tableau, on peut a present creer le fichier contenant le langage machine.*/
 
   FILE* fichier=NULL;
   fichier=fopen("hexa.txt","w");
