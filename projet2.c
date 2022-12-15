@@ -94,7 +94,7 @@ void ipush(Machine* m){
 
 void pop(Machine* m,int x){
     (m->SP)--;
-    (m->tableau_pile[x]=(m->tableau_pile[m->SP]));
+    (m->tableau_pile[x])=(m->tableau_pile[m->SP]);
 }
 
 void ipop(Machine* m){
@@ -132,7 +132,7 @@ void op(Machine* m,int i){
             m->tableau_pile[(m->SP)-1]%=m->tableau_pile[m->SP];
         }
         if(i==5){
-            m->tableau_pile[(m->SP)-1]=-m->tableau_pile[(m->SP)-1];
+            m->tableau_pile[(m->SP)-1]=-1*(m->tableau_pile[(m->SP)-1]);
         }
         if(i==6){
             m->SP--;
@@ -225,12 +225,14 @@ void rnd(Machine* m,int x){
 }
 
 void read(Machine* m,int x){
-    printf("Valeur a rentrer a l'adresse %d: ",x);
+    printf("Entrer une valeur svp : ");
+    //printf("Valeur a rentrer a l'adresse %d: ",x);
     scanf("%d",&(m->tableau_pile[x]));
 }
 
 void write(Machine* m,int x){
-    printf("Valeur de la variable a l'adresse %d: %d\n",x,m->tableau_pile[x]);
+  printf("%d\n",m->tableau_pile[x]);
+  //printf("Valeur de la variable a l'adresse %d: %d\n",x,m->tableau_pile[x]);
 }
 
 void call(Machine* m,int Adr){
@@ -242,85 +244,86 @@ void ret(Machine* m){
     m->SP=(m->SP)-1;
 }
 
-/*void halt(void){
-    return; //exit(0) si tout s'est bien passé; exit(1) sinon
-}*/
-
 void execution_principale(Machine* m,int* instruction_courante,int* donnee_courante,int nombre_ligne){
-    //printf("Nombre de ligne = %d\n",n);
-    while((m->PC)<nombre_ligne){
-
-        printf("Valeur PC %d\n",m->PC);
-        if(instruction_courante[m->PC]==0){
-            (m->PC)++;
-            push(m,donnee_courante[(m->PC)-1]);
-            continue;
-        }
-        if(instruction_courante[m->PC]==1){
-            (m->PC)++;
-            push_constante(m,donnee_courante[(m->PC)-1]);
-            continue;
-        }
-        if(instruction_courante[m->PC]==3){
-            (m->PC)++;
-            ipush(m);
-            continue;
-        }
-        if(instruction_courante[m->PC]==4){
-            (m->PC)++;
-            pop(m,donnee_courante[(m->PC)-1]);
-            continue;
-        }
-        if(instruction_courante[m->PC]==5){
-            (m->PC)++;
-            ipop(m);
-            continue;
-        }
-        if(instruction_courante[m->PC]==6){
-            (m->PC)++;
-            op(m,donnee_courante[(m->PC)-1]);
-            continue;
-        }
-        if(instruction_courante[m->PC]==7){
-            (m->PC)++;
-            jump(m,donnee_courante[(m->PC)-1]);
-            continue;
-        }
-        if(instruction_courante[m->PC]==8){
-            (m->PC)++;
-            jpz(m,donnee_courante[(m->PC)-1]);
-            continue;
-        }
-        if(instruction_courante[m->PC]==9){
-            (m->PC)++;
-            rnd(m,donnee_courante[(m->PC)-1]);
-            continue;
-        }
-        if(instruction_courante[m->PC]==10){
-            (m->PC)++;
-            read(m,donnee_courante[(m->PC)-1]);
-            continue;
-        }
-        if(instruction_courante[m->PC]==11){
-            (m->PC)++;
-            write(m,donnee_courante[(m->PC)-1]);
-            continue;
-        }
-        if(instruction_courante[m->PC]==12){
-            (m->PC)++;
-            call(m,donnee_courante[(m->PC)-1]);
-            continue;
-        }
-        if(instruction_courante[m->PC]==13){
-            (m->PC)++;
-            ret(m);
-            continue;
-        }
-        if(instruction_courante[m->PC]==14){
-            break;
-        }
-    }
+  //printf("Nombre de ligne = %d\n",n);
+  while((m->PC)<nombre_ligne){
+      if(instruction_courante[m->PC]==0){
+          (m->PC)++;
+          push(m,donnee_courante[(m->PC)-1]);
+          continue;
+      }
+      if(instruction_courante[m->PC]==1){
+          (m->PC)++;
+          push_constante(m,donnee_courante[(m->PC)-1]);
+          continue;
+      }
+      if(instruction_courante[m->PC]==2){
+          (m->PC)++;
+          ipush(m);
+          continue;
+      }
+      if(instruction_courante[m->PC]==3){
+          (m->PC)++;
+          pop(m,donnee_courante[(m->PC)-1]);
+          continue;
+      }
+      if(instruction_courante[m->PC]==4){
+          (m->PC)++;
+          ipop(m);
+          continue;
+      }
+      if(instruction_courante[m->PC]==5){
+        (m->PC)++;
+        dup(m);
+        continue;
+      }
+      if(instruction_courante[m->PC]==6){
+          (m->PC)++;
+          op(m,donnee_courante[(m->PC)-1]);
+          continue;
+      }
+      if(instruction_courante[m->PC]==7){
+          (m->PC)++;
+          jump(m,donnee_courante[(m->PC)-1]);
+          continue;
+      }
+      if(instruction_courante[m->PC]==8){
+          (m->PC)++;
+          jpz(m,donnee_courante[(m->PC)-1]);
+          continue;
+      }
+      if(instruction_courante[m->PC]==9){
+          (m->PC)++;
+          rnd(m,donnee_courante[(m->PC)-1]);
+          continue;
+      }
+      if(instruction_courante[m->PC]==10){
+          (m->PC)++;
+          read(m,donnee_courante[(m->PC)-1]);
+          continue;
+      }
+      if(instruction_courante[m->PC]==11){
+          (m->PC)++;
+          write(m,donnee_courante[(m->PC)-1]);
+          continue;
+      }
+      if(instruction_courante[m->PC]==12){
+          (m->PC)++;
+          call(m,donnee_courante[(m->PC)-1]);
+          continue;
+      }
+      if(instruction_courante[m->PC]==13){
+          (m->PC)++;
+          ret(m);
+          continue;
+      }
+      if(instruction_courante[m->PC]==14){
+          break;
+      }
+  }
 }
+
+
 
 int main(int argc,char* argv[]){
   Machine m;
@@ -330,11 +333,13 @@ int main(int argc,char* argv[]){
   int instruction_courante[nombre_ligne];
   int donnee_courante[nombre_ligne];
   recuperation_instruction_donnee_fichier_hexa("hexa.txt",instruction_courante,donnee_courante);
-  for (int i = 0; i < nombre_ligne; i++){
+  /*for (int i = 0; i < nombre_ligne; i++){
       printf("Instruction courante ligne %d: %d \t",i,instruction_courante[i]);
       printf("Donne courante ligne %d: %d\n",i,donnee_courante[i]);
-  }
+  }*/
   execution_principale(pointeur_m,instruction_courante,donnee_courante,nombre_ligne);
+  printf("\n\n");
+  printf("On affiche maintenant le contenu de la pile :\n");
   AfficherPile(pointeur_m);
   return 0;
 }
