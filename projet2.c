@@ -1,17 +1,17 @@
 #include<stdlib.h>
 #include<stdio.h>
-
+#include<string.h>
 #define nombre_caractere_max_ligne 1000
-
 char* Instruction[]={"push","push#","ipush","pop","ipop","dup","op","jmp","jpz","rnd","read","write","call","ret","halt"};
 
-
+/*------------------------------Structure-------------------------------------*/
 typedef struct{
     int SP;
     int PC;
     int tableau_pile[5000];
 }Machine;
 
+/*------------------------------Fonctions-------------------------------------*/
 int nombre_ligne_fichier(char* nom_fichier){
 /*--------Renvoie le nombre de fois où on trouve dans un certain fichier le caractère saut de ligne--------*/
 /* ----------------Attention ne renvoie pas le nombre de ligne visible par l'utilisateur-------------------*/
@@ -37,10 +37,7 @@ fclose(fichier);
 return cpt;
 }
 
-int instruction_courante[100];
-int donnee_courante[100];
-
-int stockage_hexa(char* nom_fichier){
+int recuperation_instruction_donnee_fichier_hexa(char* nom_fichier,int* instruction_courante,int* donnee_courante){
     FILE* fichier=NULL;
     fichier= fopen(nom_fichier,"r");
     int n=nombre_ligne_fichier(nom_fichier);
@@ -53,10 +50,9 @@ int stockage_hexa(char* nom_fichier){
     }
     else{
         fclose(fichier);
-        return -1;     //fichier vide
+        return -1; //ouverture fichier impossible
     }
 }
-
 
 void initialisation_pile(Machine* m){
     m->PC=0;
@@ -69,8 +65,8 @@ void initialisation_pile(Machine* m){
 void AfficherPile(const Machine* m){
     int i=0;
     printf("PC: %d\nSP: %d\n",m->PC,m->SP);
-    while (i<=(m->SP)){   
-        printf("Tableau_pile[%d]=%d\n",i,m->tableau_pile[i]); 
+    while (i<=(m->SP)){
+        printf("Tableau_pile[%d]=%d\n",i,m->tableau_pile[i]);
         i++;
     }
     //printf("valeur indice 231: %d\n",m->tableau_pile[231]);
@@ -93,7 +89,7 @@ void push_constante(Machine* m, int entier){
 
 void ipush(Machine* m){
     int n=m->tableau_pile[(m->SP)-1];
-    m->tableau_pile[(m->SP)-1]=m->tableau_pile[n]; 
+    m->tableau_pile[(m->SP)-1]=m->tableau_pile[n];
 }
 
 void pop(Machine* m,int x){
@@ -207,7 +203,7 @@ void op(Machine* m,int i){
         if(i==15){
             m->tableau_pile[(m->SP)-1]=~m->tableau_pile[(m->SP)-1];
         }
-    }  
+    }
 }
 
 void jump(Machine* m,int Adr){
@@ -225,11 +221,12 @@ void jpz(Machine* m,int Adr){
 void rnd(Machine* m,int x){
     int random=rand()%x;  //random est un entier entre 0 et x-1
     m->tableau_pile[m->SP]=random;
-    m->SP++;    
+    m->SP++;
 }
+
 void read(Machine* m,int x){
-    printf("Valeur a rentrer a l'adresse %d:\n",x);
-    scanf("%d",&(m->tableau_pile[x]));  
+    printf("Valeur a rentrer a l'adresse %d: ",x);
+    scanf("%d",&(m->tableau_pile[x]));
 }
 
 void write(Machine* m,int x){
@@ -237,79 +234,107 @@ void write(Machine* m,int x){
 }
 
 void call(Machine* m,int Adr){
-    push_constante(m,(m->PC));  //pas sur
+    push_constante(m,(m->PC));
     m->PC+=Adr;
 }
 
 void ret(Machine* m){
-    pop(m,m->PC);   //pas sur non plus sah
+    m->SP=(m->SP)-1;
 }
 
-void halt(void){
+/*void halt(void){
     return; //exit(0) si tout s'est bien passé; exit(1) sinon
-}
+}*/
 
-void execution_principale(Machine* m){
-    int n;
-    n=nombre_ligne_fichier("hexa.txt");
-    printf("Nombre de ligne = %d\n",n);
-    for(int i=0;i<n;i++){
-        if(instruction_courante[i]==0){
-            push(m,donnee_courante[i]);
+void execution_principale(Machine* m,int* instruction_courante,int* donnee_courante,int nombre_ligne){
+    //printf("Nombre de ligne = %d\n",n);
+    while((m->PC)<nombre_ligne){
+
+        printf("Valeur PC %d\n",m->PC);
+        if(instruction_courante[m->PC]==0){
+            (m->PC)++;
+            push(m,donnee_courante[(m->PC)-1]);
+            continue;
         }
-        if(instruction_courante[i]==1){
-            push_constante(m,donnee_courante[i]);
+        if(instruction_courante[m->PC]==1){
+            (m->PC)++;
+            push_constante(m,donnee_courante[(m->PC)-1]);
+            continue;
         }
-        if(instruction_courante[i]==3){
+        if(instruction_courante[m->PC]==3){
+            (m->PC)++;
             ipush(m);
+            continue;
         }
-        if(instruction_courante[i]==4){
-            pop(m,donnee_courante[i]);
+        if(instruction_courante[m->PC]==4){
+            (m->PC)++;
+            pop(m,donnee_courante[(m->PC)-1]);
+            continue;
         }
-        if(instruction_courante[i]==5){
+        if(instruction_courante[m->PC]==5){
+            (m->PC)++;
             ipop(m);
+            continue;
         }
-        if(instruction_courante[i]==6){
-            op(m,donnee_courante[i]);
+        if(instruction_courante[m->PC]==6){
+            (m->PC)++;
+            op(m,donnee_courante[(m->PC)-1]);
+            continue;
         }
-        if(instruction_courante[i]==7){
-            jump(m,donnee_courante[i]);
+        if(instruction_courante[m->PC]==7){
+            (m->PC)++;
+            jump(m,donnee_courante[(m->PC)-1]);
+            continue;
         }
-        if(instruction_courante[i]==8){
-            jpz(m,donnee_courante[i]);
+        if(instruction_courante[m->PC]==8){
+            (m->PC)++;
+            jpz(m,donnee_courante[(m->PC)-1]);
+            continue;
         }
-        if(instruction_courante[i]==9){
-            rnd(m,donnee_courante[i]);
+        if(instruction_courante[m->PC]==9){
+            (m->PC)++;
+            rnd(m,donnee_courante[(m->PC)-1]);
+            continue;
         }
-        if(instruction_courante[i]==10){
-            read(m,donnee_courante[i]);
+        if(instruction_courante[m->PC]==10){
+            (m->PC)++;
+            read(m,donnee_courante[(m->PC)-1]);
+            continue;
         }
-        if(instruction_courante[i]==11){
-            write(m,donnee_courante[i]);
+        if(instruction_courante[m->PC]==11){
+            (m->PC)++;
+            write(m,donnee_courante[(m->PC)-1]);
+            continue;
         }
-        if(instruction_courante[i]==12){
-            call(m,donnee_courante[i]);
+        if(instruction_courante[m->PC]==12){
+            (m->PC)++;
+            call(m,donnee_courante[(m->PC)-1]);
+            continue;
         }
-        if(instruction_courante[i]==13){
+        if(instruction_courante[m->PC]==13){
+            (m->PC)++;
             ret(m);
+            continue;
         }
-        if(instruction_courante[i]==14){
-            halt();
+        if(instruction_courante[m->PC]==14){
+            break;
         }
     }
 }
 
-int main(int argc, char const *argv[]){
-    Machine m;
-    Machine* pointeur_m=&m;
-    initialisation_pile(pointeur_m);
-    int nbligne=nombre_ligne_fichier("hexa.txt");
-    stockage_hexa("hexa.txt");
-    for (int i = 0; i < nbligne; i++){
-        printf("Instruction courante ligne %d: %d \t",i,instruction_courante[i]);
-        printf("Donne courante ligne %d: %d\n",i,donnee_courante[i]);
-    }
-    execution_principale(pointeur_m);
-    AfficherPile(pointeur_m);
-    return 0;
+int main(int argc,char* argv[]){
+  Machine m;
+  Machine* pointeur_m=&m;
+  initialisation_pile(pointeur_m);
+  int nombre_ligne=nombre_ligne_fichier("hexa.txt");
+  int instruction_courante[nombre_ligne];
+  int donnee_courante[nombre_ligne];
+  recuperation_instruction_donnee_fichier_hexa("hexa.txt",instruction_courante,donnee_courante);
+  for (int i = 0; i < nombre_ligne; i++){
+      printf("Instruction courante ligne %d: %d \t",i,instruction_courante[i]);
+      printf("Donne courante ligne %d: %d\n",i,donnee_courante[i]);
+  }
+  execution_principale(pointeur_m,instruction_courante,donnee_courante,nombre_ligne);
+  AfficherPile(pointeur_m);
+  return 0;
 }
