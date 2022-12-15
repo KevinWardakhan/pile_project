@@ -9,7 +9,7 @@ char* Instruction[]={"push","push#","ipush","pop","ipop","dup","op","jmp","jpz",
 typedef struct{
     int SP;
     int PC;
-    long long int tableau_pile[5000];
+    int tableau_pile[5000];
 }Machine;
 
 int nombre_ligne_fichier(char* nom_fichier){
@@ -58,27 +58,27 @@ int stockage_hexa(char* nom_fichier){
 }
 
 
-void initiliation_pile(Machine* m){
+void initialisation_pile(Machine* m){
     m->PC=0;
     m->SP=0;
     for(int j=0;j<5000;j++){
-        m->tableau_pile[j]=3000000000;  //on remplit avec des valeurs inatégnables en fonctionnement (>2*10^9)
+        m->tableau_pile[j]=0;  //on remplit avec des valeurs inatégnables en fonctionnement (>2*10^9)
     }
 }
 
 void AfficherPile(const Machine* m){
     int i=0;
     printf("PC: %d\nSP: %d\n",m->PC,m->SP);
-    while (i<(m->SP)){   
-        printf("Tableau_pile[%d]=%lld    \n",i,m->tableau_pile[i]); 
+    while (i<=(m->SP)){   
+        printf("Tableau_pile[%d]=%d\n",i,m->tableau_pile[i]); 
         i++;
     }
     //printf("valeur indice 231: %d\n",m->tableau_pile[231]);
-    for(int j=4998;j<5000;j++){
+    /*for(int j=4998;j<5000;j++){
         if((m->tableau_pile[j])!=0){
             printf("Valeur au %d-eme indice de la pile : %lld\n",j,m->tableau_pile[j]);
         }
-    }
+    }*/
 }
 
 void push(Machine* m,int x){
@@ -228,12 +228,12 @@ void rnd(Machine* m,int x){
     m->SP++;    
 }
 void read(Machine* m,int x){
-    printf("Valeur à rentrer à l'adresse %d:\n",x);
-    scanf("%lld",&(m->tableau_pile[x]));  
+    printf("Valeur a rentrer a l'adresse %d:\n",x);
+    scanf("%d",&(m->tableau_pile[x]));  
 }
 
 void write(Machine* m,int x){
-    printf("Valeur de la variable à l'adresse %d: %lld\n",x,m->tableau_pile[x]);
+    printf("Valeur de la variable a l'adresse %d: %d\n",x,m->tableau_pile[x]);
 }
 
 void call(Machine* m,int Adr){
@@ -246,14 +246,70 @@ void ret(Machine* m){
 }
 
 void halt(void){
-    exit(0); //exit(0) si tout s'est bien passé; exit(1) sinon
+    return; //exit(0) si tout s'est bien passé; exit(1) sinon
 }
-int main(int argc, char const *argv[]){
-    int nbligne=nombre_ligne_fichier("hexa.txt");
-    printf("%d\n",stockage_hexa("hexa.txt"));
-    for (int i = 0; i < nbligne; i++){
-        printf("Instruction courante indice %d: %d\t",i,instruction_courante[i]);
-        printf("Donne courante indice %d: %d\n",i,donnee_courante[i]);
+
+void execution_principale(Machine* m){
+    int n;
+    n=nombre_ligne_fichier("hexa.txt");
+    printf("Nombre de ligne = %d\n",n);
+    for(int i=0;i<n;i++){
+        if(instruction_courante[i]==0){
+            push(m,donnee_courante[i]);
+        }
+        if(instruction_courante[i]==1){
+            push_constante(m,donnee_courante[i]);
+        }
+        if(instruction_courante[i]==3){
+            ipush(m);
+        }
+        if(instruction_courante[i]==4){
+            pop(m,donnee_courante[i]);
+        }
+        if(instruction_courante[i]==5){
+            ipop(m);
+        }
+        if(instruction_courante[i]==6){
+            op(m,donnee_courante[i]);
+        }
+        if(instruction_courante[i]==7){
+            jump(m,donnee_courante[i]);
+        }
+        if(instruction_courante[i]==8){
+            jpz(m,donnee_courante[i]);
+        }
+        if(instruction_courante[i]==9){
+            rnd(m,donnee_courante[i]);
+        }
+        if(instruction_courante[i]==10){
+            read(m,donnee_courante[i]);
+        }
+        if(instruction_courante[i]==11){
+            write(m,donnee_courante[i]);
+        }
+        if(instruction_courante[i]==12){
+            call(m,donnee_courante[i]);
+        }
+        if(instruction_courante[i]==13){
+            ret(m);
+        }
+        if(instruction_courante[i]==14){
+            halt();
+        }
     }
+}
+
+int main(int argc, char const *argv[]){
+    Machine m;
+    Machine* pointeur_m=&m;
+    initialisation_pile(pointeur_m);
+    int nbligne=nombre_ligne_fichier("hexa.txt");
+    stockage_hexa("hexa.txt");
+    for (int i = 0; i < nbligne; i++){
+        printf("Instruction courante ligne %d: %d \t",i,instruction_courante[i]);
+        printf("Donne courante ligne %d: %d\n",i,donnee_courante[i]);
+    }
+    execution_principale(pointeur_m);
+    AfficherPile(pointeur_m);
     return 0;
 }
