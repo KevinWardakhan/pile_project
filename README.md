@@ -10,7 +10,7 @@ The goal is to simulate a fictional stack machine. The project consists of two p
 
 - Wardakhan Kévin
 - Abdelouhab Yacine
-- 
+
 ## Project Objectives
 
 - **Assembler**
